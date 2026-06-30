@@ -3,7 +3,7 @@ import type { CreateExpressContextOptions } from '@trpc/server/adapters/express'
 import { verifySession } from './auth.js';
 import { getUserById, getChurchByOwnerId } from '../db.js';
 import { COOKIE_NAME } from '../../shared/const.js';
-import type { User, Church } from '../../../seeking-higher/drizzle/schema.js';
+import type { User, Church } from '../../shared/schema.js';
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 

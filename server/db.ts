@@ -11,7 +11,7 @@ import {
   type Church,
   type ChurchMember,
   type InsertChurch,
-} from '../../seeking-higher/drizzle/schema.js';
+} from '../shared/schema.js';
 import { env } from './_core/env.js';
 
 const { Pool } = pkg;
