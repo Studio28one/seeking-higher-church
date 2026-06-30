@@ -34,19 +34,15 @@ app.use(
 
 // ─── Static / Vite ────────────────────────────────────────────────────────────
 
-if (env.NODE_ENV === 'production') {
-  const distPath = path.resolve(__dirname, '../../dist/public');
-  app.use(express.static(distPath));
-  app.get('*', (_req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-} else {
-  // In development, Vite runs on its own port (5173) and proxies /trpc to us.
-  // We just log that the API is running.
-  app.get('/', (_req, res) => {
-    res.json({ status: 'Seeking Higher Church API', env: 'development' });
-  });
-}
+// __dirname at runtime: dist/server/server/_core/
+// Vite output:          dist/public/
+const distPath = path.resolve(__dirname, '../../../public');
+const indexHtml = path.join(distPath, 'index.html');
+
+app.use(express.static(distPath, { index: false }));
+app.get('*', (_req, res) => {
+  res.sendFile(indexHtml);
+});
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 
