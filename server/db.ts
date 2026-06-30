@@ -134,7 +134,7 @@ export async function getChurchMembers(churchId: number): Promise<
 export async function addChurchMember(
   churchId: number,
   userId: number,
-  role: 'member' | 'leader' | 'pastor' | 'admin' = 'member',
+  role: 'member' | 'group_leader' | 'pastor' | 'owner' = 'member',
   invitedBy?: number
 ): Promise<ChurchMember> {
   const result = await db

@@ -10,7 +10,7 @@ import {
 } from './_core/trpc.js';
 import { signSession } from './_core/auth.js';
 import { getSessionCookieOptions } from './_core/cookies.js';
-import { COOKIE_NAME } from '../../shared/const.js';
+import { COOKIE_NAME } from '../shared/const.js';
 import {
   db,
   getUserByEmail,
@@ -293,7 +293,7 @@ const churchRouter = router({
     .input(
       z.object({
         memberId: z.number(),
-        role: z.enum(['member', 'leader', 'pastor', 'admin']),
+        role: z.enum(['member', 'group_leader', 'pastor', 'owner']),
       })
     )
     .mutation(async ({ input, ctx }) => {
