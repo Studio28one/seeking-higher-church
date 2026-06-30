@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch server/_core/index.ts",
     "build": "vite build && tsc -p tsconfig.server.json",
-    "start": "node dist/server/index.js"
+    "start": "node dist/server/server/_core/index.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
