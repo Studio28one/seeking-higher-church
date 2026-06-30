@@ -9,26 +9,29 @@ import MembersPage from './pages/MembersPage';
 import ChurchProfilePage from './pages/ChurchProfilePage';
 import PublicChurchProfile from './pages/PublicChurchProfile';
 import FindChurch from './pages/FindChurch';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminChurches from './pages/AdminChurches';
 
-function ProtectedRoute({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function Spinner() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-8 h-8 border-4 border-navy border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
+  if (isLoading) return <Spinner />;
+  if (!user) return <Redirect to="/login" />;
+  return <>{children}</>;
+}
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-navy border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Redirect to="/login" />;
-  }
-
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <Spinner />;
+  if (!user) return <Redirect to="/login" />;
+  if (user.role !== 'admin') return <Redirect to="/dashboard" />;
   return <>{children}</>;
 }
 
@@ -58,6 +61,18 @@ export default function App() {
         <ProtectedRoute>
           <ChurchProfilePage />
         </ProtectedRoute>
+      </Route>
+
+      <Route path="/admin">
+        <AdminRoute>
+          <AdminDashboard />
+        </AdminRoute>
+      </Route>
+
+      <Route path="/admin/churches">
+        <AdminRoute>
+          <AdminChurches />
+        </AdminRoute>
       </Route>
 
       <Route>

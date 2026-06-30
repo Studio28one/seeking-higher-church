@@ -7,6 +7,7 @@ import {
   publicProcedure,
   protectedProcedure,
   churchAdminProcedure,
+  adminProcedure,
 } from './_core/trpc.js';
 import { signSession } from './_core/auth.js';
 import { getSessionCookieOptions } from './_core/cookies.js';
@@ -28,6 +29,7 @@ import {
   createInvite,
   getInviteByCode,
   users,
+  churches,
   churchMembers,
   churchInvites,
 } from './db.js';
@@ -377,11 +379,108 @@ const churchRouter = router({
     }),
 });
 
+// ─── Admin Router ─────────────────────────────────────────────────────────────
+
+const adminRouter = router({
+  stats: adminProcedure.query(async () => {
+    const [total, pending, approved, rejected] = await Promise.all([
+      db.select({ count: sql<number>`count(*)::int` }).from(churches),
+      db.select({ count: sql<number>`count(*)::int` }).from(churches).where(eq(churches.approvalStatus, 'pending')),
+      db.select({ count: sql<number>`count(*)::int` }).from(churches).where(eq(churches.approvalStatus, 'approved')),
+      db.select({ count: sql<number>`count(*)::int` }).from(churches).where(eq(churches.approvalStatus, 'rejected')),
+    ]);
+    return {
+      total: total[0]?.count ?? 0,
+      pending: pending[0]?.count ?? 0,
+      approved: approved[0]?.count ?? 0,
+      rejected: rejected[0]?.count ?? 0,
+    };
+  }),
+
+  allChurches: adminProcedure
+    .input(z.object({ status: z.enum(['all', 'pending', 'approved', 'rejected']).default('all') }))
+    .query(async ({ input }) => {
+      const rows = await db
+        .select({
+          id: churches.id,
+          name: churches.name,
+          slug: churches.slug,
+          pastorName: churches.pastorName,
+          city: churches.city,
+          state: churches.state,
+          contactEmail: churches.contactEmail,
+          approvalStatus: churches.approvalStatus,
+          approvedAt: churches.approvedAt,
+          rejectionReason: churches.rejectionReason,
+          createdAt: churches.createdAt,
+          isActive: churches.isActive,
+          ownerEmail: users.email,
+          ownerName: users.name,
+        })
+        .from(churches)
+        .leftJoin(users, eq(churches.ownerId, users.id))
+        .orderBy(churches.createdAt);
+
+      if (input.status === 'all') return rows;
+      return rows.filter((r) => r.approvalStatus === input.status);
+    }),
+
+  approveChurch: adminProcedure
+    .input(z.object({ churchId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      await db
+        .update(churches)
+        .set({
+          approvalStatus: 'approved',
+          approvedAt: new Date(),
+          approvedBy: ctx.user.id,
+          rejectionReason: null,
+        })
+        .where(eq(churches.id, input.churchId));
+      return { ok: true };
+    }),
+
+  rejectChurch: adminProcedure
+    .input(z.object({ churchId: z.number(), reason: z.string().min(1).max(500) }))
+    .mutation(async ({ input, ctx }) => {
+      await db
+        .update(churches)
+        .set({
+          approvalStatus: 'rejected',
+          approvedBy: ctx.user.id,
+          rejectionReason: input.reason,
+        })
+        .where(eq(churches.id, input.churchId));
+      return { ok: true };
+    }),
+
+  resetToPending: adminProcedure
+    .input(z.object({ churchId: z.number() }))
+    .mutation(async ({ input }) => {
+      await db
+        .update(churches)
+        .set({ approvalStatus: 'pending', approvedAt: null, rejectionReason: null })
+        .where(eq(churches.id, input.churchId));
+      return { ok: true };
+    }),
+
+  toggleActive: adminProcedure
+    .input(z.object({ churchId: z.number(), isActive: z.boolean() }))
+    .mutation(async ({ input }) => {
+      await db
+        .update(churches)
+        .set({ isActive: input.isActive })
+        .where(eq(churches.id, input.churchId));
+      return { ok: true };
+    }),
+});
+
 // ─── App Router ───────────────────────────────────────────────────────────────
 
 export const appRouter = router({
   auth: authRouter,
   church: churchRouter,
+  admin: adminRouter,
 });
 
 export type AppRouter = typeof appRouter;

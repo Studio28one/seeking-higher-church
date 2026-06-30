@@ -234,4 +234,4 @@ function generateInviteCode(): string {
   return code;
 }
 
-export { users, churches, churchMembers, churchAffirmations, churchInvites };
+export { users, churches, churchMembers, churchAffirmations, churchInvites, db as dbClient };
